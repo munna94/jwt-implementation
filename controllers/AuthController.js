@@ -1,14 +1,14 @@
 //@Author: MUNNA KUMAR SAH
 //Copyright 2013,All rights reserved.
 
-
 var User = require("../models/user");
+var RefreshToken = require("../models/refreshToken");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const randtoken = require("rand-token");
 const secret = process.env.SECRET_KEY;
 const redis_host = process.env.REDIS_HOST;
 const redis_port = process.env.REDIS_PORT;
-
 
 let generateToken = (req, res) => {
   let password = req.body.password;
@@ -44,9 +44,9 @@ let generateToken = (req, res) => {
 
 let verifyToken = (req, res) => {
   console.log("inside verify token==>");
-  
+
   var redis = require("redis"),
-  client = redis.createClient(redis_port,redis_host);
+    client = redis.createClient(redis_port, redis_host);
   let token = req.headers["jwt-token"];
   if (!token)
     return res.status(401).send({ auth: false, message: "No token provided." });
@@ -74,7 +74,70 @@ let verifyToken = (req, res) => {
   });
 };
 
+let refreshToken = (req, res) => {
+  RefreshToken.findOne({}, (err, result) => {
+    let currentTime = new Date().getTime();
+    if (err)
+      return res.status(500).send({ message: "failed to fetch token .." });
+    if (!result) {
+      createRefreshToken(req, res);
+    } else if (currentTime - result["expiredOn"] > 0) {
+      //elapsed expired time
+      //generate new token
+      updateRefreshToken(req, res, result["_id"]);
+    } else {
+      console.log("inside normal==>");
+
+      //return existing token
+      res.status(200).send({ token: result["token"] });
+    }
+  });
+};
+
+let createRefreshToken = (req, res) => {
+  let expiredOn = new Date().getTime() + 5 * 60 * 1000; //15 min inti millisec
+  let refreshToken = randtoken.uid(256);
+  RefreshToken.create(
+    {
+      token: refreshToken,
+      createdOn: new Date().getTime(),
+      expiredOn: expiredOn
+    },
+    (err, result) => {
+      if (err)
+        return res
+          .status(500)
+          .send({ message: "failed to save newly created token .." });
+      res.status(200).send({ token: result["token"] });
+    }
+  );
+};
+
+let updateRefreshToken = (req, res, id) => {
+  let expiredOn = new Date().getTime() + 5 * 60 * 1000; //15 min inti millisec
+  let refreshToken = randtoken.uid(256);
+  RefreshToken.findOneAndUpdate(
+    { _id: id },
+    {
+      $set: {
+        createdOn: new Date().getTime(),
+        expiredOn: expiredOn,
+        token: refreshToken
+      }
+    },
+    { new: true },
+    (err, newToken) => {
+      if (err)
+        return res
+          .status(500)
+          .send({ message: "failed to save newly created token .." });
+      res.status(200).send({ token: newToken["token"] });
+    }
+  );
+};
+
 module.exports = {
   verifyToken,
-  generateToken
+  generateToken,
+  refreshToken
 };
