@@ -1,3 +1,7 @@
+//@Author: MUNNA KUMAR SAH
+//Copyright 2013,All rights reserved.
+
+
 var mongoose = require('mongoose');
 const dotenv = require("dotenv");
 dotenv.config();

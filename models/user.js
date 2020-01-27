@@ -1,3 +1,7 @@
+//@Author: MUNNA KUMAR SAH
+//Copyright 2013,All rights reserved.
+
+
 var mongoose = require('mongoose');  
 var UserSchema = new mongoose.Schema({  
   name: { type:String ,required:true},
