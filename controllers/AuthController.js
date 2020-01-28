@@ -56,7 +56,7 @@ let verifyToken = (req, res) => {
       //when token expire then we need to remove logged in details from redis
       res
         .status(500)
-        .send({ auth: false, message: "Failed to authenticate token." });
+        .send({ auth: false, message: "invalid or expired token.Please regenerate " });
     } else {
       let id = decoded.id;
       //check from redis user logged in or not if not return
