@@ -15,8 +15,16 @@ let getStatus = function(req, res) {
 };
 
 let register = (req, res) => {
+  if (!req.body.password || !req.body.mobile || !req.body.name) return res.status(400).send({message:"missing body fields.."})
   var hashedPassword = bcrypt.hashSync(req.body.password, 8);
-
+//FIRST CHECK IF THIS MOBILE IS REGISTERED
+  User.findOne({ mobile: req.body.mobile  }, (err, existingUser) => {
+    if (err)
+      return res
+        .status(400)
+        .send({ message: "error while getting user details " });
+    if (existingUser) return res.status(409).send({message:"user already registered with this mobile.."})
+  
   User.create(
     {
       name: req.body.name,
@@ -29,9 +37,6 @@ let register = (req, res) => {
         return res
           .status(500)
           .send("There was a problem registering the user.");
-      //delete user["_id"];
-      //delete user["__v"];
-
       // else create a token
       let token = generateTokenAfterSignUp(user);
       //generateToken(user);
@@ -44,6 +49,7 @@ let register = (req, res) => {
         });
     }
   );
+});
 };
 
 let login = (req, res) => {
