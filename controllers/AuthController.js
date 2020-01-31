@@ -75,18 +75,15 @@ let verifyToken = (req, res) => {
 };
 
 let refreshToken = (req, res) => {
-  RefreshToken.findOne({}, (err, result) => {
+  RefreshToken.findOne({}, {useFindAndModify:false}).sort({ $natural: -1 }).limit(1).exec((err, result) => {
+        
     let currentTime = new Date().getTime();
     if (err)
       return res.status(500).send({ message: "failed to fetch token .." });
-    if (!result) {
+    if (!result || (currentTime - result["expiredOn"])>0) {
       createRefreshToken(req, res);
-    } else if (currentTime - result["expiredOn"] > 0) {
-      //elapsed expired time
-      //generate new token
-      updateRefreshToken(req, res, result["_id"]);
-    } else {
-      console.log("inside normal==>");
+    } else {//simply return the latest token b/c its not expired yet
+      console.log("not yet expired old token ==>");
 
       //return existing token
       res.status(200).send({ token: result["token"] });
@@ -95,7 +92,7 @@ let refreshToken = (req, res) => {
 };
 
 let createRefreshToken = (req, res) => {
-  let expiredOn = new Date().getTime() + 5 * 60 * 1000; //15 min inti millisec
+  let expiredOn = new Date().getTime() + 15 * 60 * 1000; //15 min inti millisec
   let refreshToken = randtoken.uid(256);
   RefreshToken.create(
     {
@@ -114,7 +111,7 @@ let createRefreshToken = (req, res) => {
 };
 
 let updateRefreshToken = (req, res, id) => {
-  let expiredOn = new Date().getTime() + 5 * 60 * 1000; //15 min inti millisec
+  let expiredOn = new Date().getTime() + 15 * 60 * 1000; //15 min inti millisec
   let refreshToken = randtoken.uid(256);
   RefreshToken.findOneAndUpdate(
     { _id: id },
