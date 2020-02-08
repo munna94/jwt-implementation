@@ -1,5 +1,5 @@
 //@Author: MUNNA KUMAR SAH
-//Copyright 2013,All rights reserved.
+//Copyright 2020,All rights reserved.
 
 var User = require("../models/user");
 var RefreshToken = require("../models/refreshToken");
@@ -36,7 +36,7 @@ let generateToken = (req, res) => {
     }
 
     let token = jwt.sign({ id: user._id }, secret, {
-      expiresIn: 600 // total number of second //2 minute
+      expiresIn: parseInt(process.env.TOKEN_EXPIRY) // total number of second //2 minute
     });
     res.status(200).send({ auth: true, token: token });
   });
@@ -51,7 +51,9 @@ let verifyToken = (req, res) => {
   if (!token)
     return res.status(401).send({ auth: false, message: "No token provided." });
 
-  jwt.verify(token, secret, function(err, decoded) {
+  jwt.verify(token, secret, function (err, decoded) {
+    console.log("error while verifying==>", err);
+    
     if (err) {
       //when token expire then we need to remove logged in details from redis
       res

@@ -1,5 +1,5 @@
 //@Author: MUNNA KUMAR SAH
-//Copyright 2013, All rights reserved.
+//Copyright 2020, All rights reserved.
 
 var express = require("express");
 var User = require("../models/user");
@@ -143,8 +143,9 @@ let logout = (req, res) => {
 };
 
 let generateTokenAfterSignUp = user => {
+  console.log("generated token with ex time==]",process.env.TOKEN_EXPIRY);
   let token = jwt.sign({ id: user._id }, secret, {
-    expiresIn: process.env.TOKEN_EXPIRY // total number of second // 10 minute
+    expiresIn: parseInt(process.env.TOKEN_EXPIRY) // total number of second // 10 minute
   });
   return token;
   //res.status(200).send({ auth: true, token: token });
